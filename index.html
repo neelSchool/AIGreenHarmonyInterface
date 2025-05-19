@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Plant Conditions Lookup</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body { padding: 2rem; }
+    .result-card { margin-top: 1.5rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="mb-4">🌿 Plant Conditions Lookup</h1>
+    <p>Enter a scientific or common plant name to retrieve optimal growing conditions.</p>
+    <input type="text" id="plantInput" class="form-control" placeholder="e.g. Solanum lycopersicum or Tomato" />
+    <button onclick="fetchPlantInfo()" class="btn btn-success mt-2">Search</button>
+    <div id="result" class="result-card"></div>
+  </div>
+
+  <script>
+    async function fetchPlantInfo() {
+      const query = document.getElementById('plantInput').value.trim();
+      const resultDiv = document.getElementById('result');
+
+      if (!query) {
+        resultDiv.innerHTML = '<div class="alert alert-warning">Please enter a plant name.</div>';
+        return;
+      }
+
+      try {
+        const response = await fetch('ecocrop_data.json');
+        const data = await response.json();
+
+        const match = data.find(plant =>
+          plant.scientific_name.toLowerCase().includes(query.toLowerCase()) ||
+          plant.common_name.toLowerCase().includes(query.toLowerCase())
+        );
+
+        if (!match) {
+          resultDiv.innerHTML = '<div class="alert alert-danger">Plant not found.</div>';
+          return;
+        }
+
+        resultDiv.innerHTML = `
+          <div class="card">
+            <div class="card-body">
+              <h4>${match.common_name} (<em>${match.scientific_name}</em>)</h4>
+              <ul class="list-group">
+                <li class="list-group-item"><strong>Soil pH:</strong> ${match.soil_ph}</li>
+                <li class="list-group-item"><strong>Moisture:</strong> ${match.moisture}</li>
+                <li class="list-group-item"><strong>Light:</strong> ${match.light}</li>
+                <li class="list-group-item"><strong>Temperature Range:</strong> ${match.min_temp} - ${match.max_temp}°C</li>
+                <li class="list-group-item"><strong>Nutrients:</strong> ${match.nutrients}</li>
+                <li class="list-group-item"><strong>Hydroponic Friendly:</strong> ${match.hydroponic_friendly}</li>
+              </ul>
+            </div>
+          </div>
+        `;
+      } catch (error) {
+        resultDiv.innerHTML = `<div class="alert alert-danger">Error fetching plant data.</div>`;
+        console.error(error);
+      }
+    }
+  </script>
+</body>
+</html>
